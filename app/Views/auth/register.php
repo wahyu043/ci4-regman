@@ -1,56 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Registrasi</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Register</title>
 </head>
 
-<body class="bg-light">
-
+<body>
     <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">Form Registrasi</div>
-                    <div class="card-body">
+        <h2>Registrasi</h2>
 
-                        <?php if (session()->getFlashdata('errors')): ?>
-                            <div class="alert alert-danger">
-                                <ul class="mb-0">
-                                    <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                                        <li><?= esc($error) ?></li>
-                                    <?php endforeach ?>
-                                </ul>
-                            </div>
-                        <?php endif; ?>
+        <?php if (session()->getFlashdata('success')): ?>
+            <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
+        <?php endif; ?>
 
-                        <form action="<?= site_url('register') ?>" method="post">
-                            <?= csrf_field() ?>
+        <?php if (isset($validation)): ?>
+            <div class="alert alert-danger"><?= $validation->listErrors() ?></div>
+        <?php endif; ?>
 
+        <form action="/register/process" method="post">
+            <?= csrf_field() ?>
 
-                            <div class="form-group">
-                                <label>Email (@rumahweb.co.id)</label>
-                                <input type="email" name="email" class="form-control" value="<?= old('email') ?>" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Password</label>
-                                <input type="password" name="password" class="form-control" required>
-                                <small class="form-text text-muted">Minimal 12 karakter, huruf besar, kecil, angka & 2 simbol</small>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Tanggal Lahir</label>
-                                <input type="date" name="birthdate" class="form-control" value="<?= old('birthdate') ?>" required>
-                            </div>
-
-                            <button type="submit" class="btn btn-success btn-block">Daftar</button>
-                        </form>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>Email (wajib @rumahweb.co.id)</label>
+                <input type="email" name="email" class="form-control" required value="<?= old('email') ?>">
             </div>
-        </div>
+
+            <div class="form-group">
+                <label>Password (min. 12 karakter, huruf besar, kecil, angka, dan simbol)</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Tanggal Lahir</label>
+                <input type="date" name="birthdate" class="form-control" required value="<?= old('birthdate') ?>">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Daftar</button>
+        </form>
     </div>
 
 </body>
