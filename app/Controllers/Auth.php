@@ -54,7 +54,11 @@ class Auth extends Controller
             'birthdate' => $this->request->getPost('birthdate')
         ]);
 
-        return redirect()->to('/register')->with('success', 'Registrasi berhasil!');
+        // flash message sukses
+            $session->setFlashdata('success', 'Registrasi berhasil!');
+
+            
+            return redirect()->to('/users/list');
     }
 
     public function listUsers()
@@ -73,4 +77,48 @@ class Auth extends Controller
             return view('users/list', ['users' => [], 'error' => $e->getMessage()]);
         }
     }
+
+    public function createUser()
+    {
+        helper(['form']);
+        return view('users/create');
+    }
+
+    public function storeUser()
+{
+    helper(['form']);
+
+    $name = $this->request->getPost('name');
+    $job  = $this->request->getPost('job');
+
+    if (!$name || !$job) {
+        return redirect()->back()->with('error', 'Nama dan pekerjaan wajib diisi.');
+    }
+
+    $data = json_encode([
+        'name' => $name,
+        'job'  => $job,
+    ]);
+
+    $options = [
+        'http' => [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/json\r\n" .
+                         "Content-Length: " . strlen($data) . "\r\n",
+            'content' => $data,
+        ],
+    ];
+
+    $context = stream_context_create($options);
+    $result = file_get_contents('https://reqres.in/api/users', false, $context);
+
+    if ($result === FALSE) {
+        return redirect()->back()->with('error', 'Gagal menghubungi API.');
+    }
+
+    $result = json_decode($result, true);
+
+    return view('users/created', ['user' => $result]);
+}
+
 }
