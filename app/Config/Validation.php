@@ -29,7 +29,20 @@ class Validation extends BaseConfig
         \App\Validation\UserRules::class,
     ];
 
-    
+    public function check_age(string $str, string &$error = null): bool
+    {
+        $birthdate = new \DateTime($str);
+        $today = new \DateTime();
+        $age = $today->diff($birthdate)->y;
+
+        if ($age < 17) {
+            $error = 'Usia minimal 17 tahun.';
+            return false;
+        }
+        return true;
+    }
+
+
 
     /**
      * Specifies the views that are used to display the
