@@ -119,7 +119,7 @@ class Users extends Controller
 
     public function editForm($id)
     {
-        $response = file_get_contents("https://reqres.in/api/users/" . $id);
+        $response = $this->getApi("https://reqres.in/api/users/" . $id);
         $data = json_decode($response, true);
 
         $data['user'] = $data['data'] ?? null;
@@ -155,5 +155,29 @@ class Users extends Controller
         } else {
             return redirect()->to('/users/list')->with('error', 'Gagal update user.');
         }
+    }
+
+    public function delete($id)
+    {
+        // Delay 3 detik sesuai soal
+        sleep(3);
+
+        $url = "https://reqres.in/api/users/" . $id;
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpcode == 204) {
+            session()->setFlashdata('success', 'User berhasil dihapus (ID: ' . $id . ').');
+        } else {
+            session()->setFlashdata('error', 'Gagal menghapus user (ID: ' . $id . ').');
+        }
+
+        return redirect()->to('/users/list');
     }
 }

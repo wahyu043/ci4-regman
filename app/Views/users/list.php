@@ -18,10 +18,10 @@
             </div>
         <?php endif; ?>
 
-        <a href="/users/create" class="btn btn-success mb-3">Tambah User Baru</a>
-
-
         <h2>Daftar User dari reqres.in</h2>
+
+        <a href="/users/create" class="btn btn-success mb-3">Tambah User Baru</a>
+        <a href="<?= site_url('logout') ?>" class="btn btn-danger mb-3">Logout</a>
 
         <?php if (session()->getFlashdata('success')): ?>
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -61,6 +61,8 @@
                                 <p class="card-text"><?= esc($user['email'] ?? '-') ?></p>
 
                                 <a href="/users/edit/<?= esc($user['id']) ?>" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="<?= site_url('users/delete/' . $user['id']) ?>"
+                                    class="btn btn-sm btn-danger btn-delete">Delete</a>
 
                             </div>
                         </div>
@@ -74,6 +76,31 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                if (!confirm('Yakin ingin menghapus user ini?')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                // Tampilkan overlay blocking
+                const overlay = document.createElement('div');
+                overlay.style.position = 'fixed';
+                overlay.style.top = 0;
+                overlay.style.left = 0;
+                overlay.style.width = '100%';
+                overlay.style.height = '100%';
+                overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                overlay.style.display = 'flex';
+                overlay.style.alignItems = 'center';
+                overlay.style.justifyContent = 'center';
+                overlay.style.zIndex = 9999;
+                overlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div>';
+                document.body.appendChild(overlay);
+            });
+        });
+    </script>
 
 
 </body>
