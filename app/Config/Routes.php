@@ -18,3 +18,5 @@ $routes->setAutoRoute(true); // atau false kalau kamu mau full manual
 $routes->get('/users/list', 'Users::list');
 $routes->get('/users/create', 'Users::createForm');
 $routes->post('/users/create', 'Users::create');
+$routes->get('/users/edit/(:num)', 'Users::editForm/$1');
+$routes->post('/users/update/(:num)', 'Users::update/$1');

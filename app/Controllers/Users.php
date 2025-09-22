@@ -6,44 +6,70 @@ use CodeIgniter\Controller;
 
 class Users extends Controller
 {
-    public function list()
+
+    private function getApi($url, $method = 'GET', $payload = null)
     {
-        $session    = session();
-        $localUser  = $session->get('user');
-        $allUsers   = [];
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
-        try {
-            // Ambil user dari API
-            $client   = \Config\Services::curlrequest();
-            $response = $client->get('https://reqres.in/api/users?page=1');
-            $result   = json_decode($response->getBody(), true);
-            $apiUsers = $result['data'] ?? [];
-
-            // Simpan user aktif terpisah
-            $activeUser = null;
-            if ($localUser && isset($localUser['email'])) {
-                $activeUser = [
-                    'name'  => ucfirst(explode('@', $localUser['email'])[0]),
-                    'email' => $localUser['email'],
-                ];
+        // handle POST/PUT/DELETE
+        if ($method !== 'GET') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+            if ($payload) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($payload)
+                ]);
             }
-
-            $allUsers = $apiUsers;
-
-            return view('users/list', [
-                'users'      => $allUsers,
-                'activeUser' => $activeUser,
-                'error'      => null
-            ]);
-        } catch (\Exception $e) {
-            return view('users/list', [
-                'users'      => [],
-                'activeUser' => null,
-                'error'      => 'Gagal mengambil data: ' . $e->getMessage()
-            ]);
         }
+
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        // fallback kalau gagal
+        if ($response === false || $httpcode >= 400) {
+            if ($method === 'GET') {
+                $response = @file_get_contents($url);
+            } else {
+                // fallback untuk POST/PUT/DELETE
+                $opts = [
+                    'http' => [
+                        'method'  => $method,
+                        'header'  => "Content-Type: application/json\r\n",
+                        'content' => $payload ?: ''
+                    ]
+                ];
+                $context = stream_context_create($opts);
+                $response = @file_get_contents($url, false, $context);
+            }
+        }
+
+        return $response;
     }
 
+
+    public function list()
+    {
+        $apiResponse = $this->getApi("https://reqres.in/api/users?page=1");
+        $usersApi = [];
+
+        if ($apiResponse) {
+            $data = json_decode($apiResponse, true);
+            $usersApi = $data['data'] ?? [];
+        }
+
+        $session = session();
+        $activeUser = $session->get('user') ?? [];
+
+        return view('users/list', [
+            'users'      => $usersApi,
+            'activeUser'  => $activeUser
+        ]);
+    }
 
     public function createForm()
     {
@@ -88,6 +114,46 @@ class Users extends Controller
         } catch (\Exception $e) {
             session()->setFlashdata('error', 'Exception: ' . $e->getMessage());
             return redirect()->to('/users/create');
+        }
+    }
+
+    public function editForm($id)
+    {
+        $response = file_get_contents("https://reqres.in/api/users/" . $id);
+        $data = json_decode($response, true);
+
+        $data['user'] = $data['data'] ?? null;
+
+        if (!$data['user']) {
+            return redirect()->to('/users/list')->with('error', 'User tidak ditemukan.');
+        }
+
+        return view('users/edit', $data);
+    }
+
+    public function update($id)
+    {
+        $name = $this->request->getPost('name');
+        $job  = $this->request->getPost('job');
+
+        $payload = json_encode(['name' => $name, 'job' => $job]);
+
+        $ch = curl_init("https://reqres.in/api/users/" . $id);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($payload)
+        ]);
+
+        $result = curl_exec($ch);
+        curl_close($ch);
+
+        if ($result) {
+            return redirect()->to('/users/list')->with('success', 'User berhasil diupdate!');
+        } else {
+            return redirect()->to('/users/list')->with('error', 'Gagal update user.');
         }
     }
 }

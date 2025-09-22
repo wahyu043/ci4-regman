@@ -60,7 +60,8 @@
                                 </h5>
                                 <p class="card-text"><?= esc($user['email'] ?? '-') ?></p>
 
-                                <a href="<?= base_url('users/editForm/' . $user['id']) ?>" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="/users/edit/<?= esc($user['id']) ?>" class="btn btn-sm btn-warning">Edit</a>
+
                             </div>
                         </div>
                     </div>
